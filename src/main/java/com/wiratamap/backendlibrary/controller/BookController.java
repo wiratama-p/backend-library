@@ -2,6 +2,7 @@ package com.wiratamap.backendlibrary.controller;
 
 import com.wiratamap.backendlibrary.dto.BookDto;
 import com.wiratamap.backendlibrary.service.BookService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,12 +20,12 @@ public class BookController {
 
     @PostMapping("/books")
     @ResponseStatus(HttpStatus.CREATED)
-    public BookDto create(@RequestBody BookDto bookDto) {
+    public BookDto create(@Valid @RequestBody BookDto bookDto) {
         return bookService.create(bookDto);
     }
 
     @PutMapping("/books/{id}")
-    public BookDto update(@PathVariable Long id, @RequestBody BookDto bookDto) {
+    public BookDto update(@PathVariable Long id, @Valid @RequestBody BookDto bookDto) {
         return bookService.update(id, bookDto);
     }
 }

@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -22,6 +24,16 @@ public class BookService {
         Book book = toEntity(bookDto);
         Book savedBook = bookRepository.save(book);
         return toDto(savedBook);
+    }
+
+    public List<BookDto> findAll(String search) {
+        List<Book> books = (search == null || search.isBlank())
+                ? bookRepository.findAll()
+                : bookRepository.searchByTitleOrAuthor(search);
+
+        return books.stream()
+            .map(this::toDto)
+            .toList();
     }
 
     public BookDto findById(Long id) {

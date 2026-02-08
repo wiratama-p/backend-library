@@ -10,14 +10,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -345,5 +339,95 @@ class BookControllerIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.message", is("Book not found with id: 999")));
+    }
+
+    @Test
+    void listBooks_shouldReturnAllBooks_whenNoSearchParam() throws Exception {
+        bookRepository.save(Book.builder()
+                .title("Mommyclopedia: 78 Resep MPASI")
+                .author("dr. Meta Hanindita, Sp.A")
+                .isbn("9786028519939")
+                .publicationYear("2016")
+                .genre("Parenting")
+                .build());
+        bookRepository.save(Book.builder()
+                .title("Serunya Dunia Hewan: 101+ Kata Pertamaku")
+                .author("Gianti Amanda")
+                .isbn("9780735211292")
+                .publicationYear("2025")
+                .genre("Children")
+                .build());
+
+        mockMvc.perform(get("/books"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
+    }
+
+    @Test
+    void listBooks_shouldReturnEmptyList_whenNoBooksExist() throws Exception {
+        mockMvc.perform(get("/books"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void listBooks_shouldReturnMatchingBooks_whenSearchByTitle() throws Exception {
+        bookRepository.save(Book.builder()
+                .title("Mommyclopedia: 78 Resep MPASI")
+                .author("dr. Meta Hanindita, Sp.A")
+                .isbn("9786028519939")
+                .publicationYear("2016")
+                .genre("Parenting")
+                .build());
+        bookRepository.save(Book.builder()
+                .title("Serunya Dunia Hewan: 101+ Kata Pertamaku")
+                .author("Gianti Amanda")
+                .isbn("9780735211292")
+                .publicationYear("2025")
+                .genre("Children")
+                .build());
+
+        mockMvc.perform(get("/books").param("search", "mommyclopedia"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].title", is("Mommyclopedia: 78 Resep MPASI")));
+    }
+
+    @Test
+    void listBooks_shouldReturnMatchingBooks_whenSearchByAuthor() throws Exception {
+        bookRepository.save(Book.builder()
+                .title("Mommyclopedia: 78 Resep MPASI")
+                .author("dr. Meta Hanindita, Sp.A")
+                .isbn("9786028519939")
+                .publicationYear("2016")
+                .genre("Parenting")
+                .build());
+        bookRepository.save(Book.builder()
+                .title("Serunya Dunia Hewan: 101+ Kata Pertamaku")
+                .author("Gianti Amanda")
+                .isbn("9780735211292")
+                .publicationYear("2025")
+                .genre("Children")
+                .build());
+
+        mockMvc.perform(get("/books").param("search", "gianti"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].author", is("Gianti Amanda")));
+    }
+
+    @Test
+    void listBooks_shouldReturnEmpty_whenSearchMatchesNothing() throws Exception {
+        bookRepository.save(Book.builder()
+                .title("Mommyclopedia: 78 Resep MPASI")
+                .author("dr. Meta Hanindita, Sp.A")
+                .isbn("9786028519939")
+                .publicationYear("2016")
+                .genre("Parenting")
+                .build());
+
+        mockMvc.perform(get("/books").param("search", "nonexistent"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 }

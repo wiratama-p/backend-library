@@ -18,7 +18,7 @@ A REST API for managing books, built with Spring Boot 4.0.2 and Java 25.
 1. Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/wiratama-p/backend-library.git
 cd backend-library
 ```
 

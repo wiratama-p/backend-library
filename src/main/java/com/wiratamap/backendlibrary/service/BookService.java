@@ -2,18 +2,25 @@ package com.wiratamap.backendlibrary.service;
 
 import com.wiratamap.backendlibrary.dto.BookDto;
 import com.wiratamap.backendlibrary.entity.Book;
+import com.wiratamap.backendlibrary.exception.DuplicateRecordException;
 import com.wiratamap.backendlibrary.exception.RecordNotFoundException;
 import com.wiratamap.backendlibrary.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BookService {
 
     private final BookRepository bookRepository;
 
     public BookDto create(BookDto bookDto) {
+        if (bookRepository.existsByIsbn(bookDto.isbn())) {
+            throw new DuplicateRecordException("Book with ISBN " + bookDto.isbn() + " already exists");
+        }
+
         Book book = toEntity(bookDto);
         Book savedBook = bookRepository.save(book);
         return toDto(savedBook);
@@ -22,6 +29,10 @@ public class BookService {
     public BookDto update(Long id, BookDto bookDto) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Book not found with id: " + id));
+
+        if (bookRepository.existsByIsbnAndIdNot(bookDto.isbn(), id)) {
+            throw new DuplicateRecordException("Book with ISBN " + bookDto.isbn() + " already exists");
+        }
 
         book.setTitle(bookDto.title());
         book.setAuthor(bookDto.author());

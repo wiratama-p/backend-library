@@ -26,6 +26,15 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(DuplicateRecordException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, Object> handleDuplicateRecordException(DuplicateRecordException ex) {
+        return Map.of(
+                "status", HttpStatus.CONFLICT.value(),
+                "message", ex.getMessage()
+        );
+    }
+
     @ExceptionHandler(RecordNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, Object> handleRecordNotFoundException(RecordNotFoundException ex) {

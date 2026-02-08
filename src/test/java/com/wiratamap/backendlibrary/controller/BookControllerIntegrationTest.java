@@ -40,7 +40,7 @@ class BookControllerIntegrationTest {
                 {
                     "title": "Mommyclopedia: 78 Resep MPASI",
                     "author": "dr. Meta Hanindita, Sp.A",
-                    "isbn": "978-602-8519-93-9",
+                    "isbn": "9786028519939",
                     "publicationYear": "2016",
                     "genre": "Parenting",
                     "description": "Kumpulan resep MPASI untuk bayi"
@@ -54,10 +54,73 @@ class BookControllerIntegrationTest {
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.title", is("Mommyclopedia: 78 Resep MPASI")))
                 .andExpect(jsonPath("$.author", is("dr. Meta Hanindita, Sp.A")))
-                .andExpect(jsonPath("$.isbn", is("978-602-8519-93-9")))
+                .andExpect(jsonPath("$.isbn", is("9786028519939")))
                 .andExpect(jsonPath("$.publicationYear", is("2016")))
                 .andExpect(jsonPath("$.genre", is("Parenting")))
                 .andExpect(jsonPath("$.description", is("Kumpulan resep MPASI untuk bayi")));
+    }
+
+    @Test
+    void createBook_shouldReturn400_whenIsbnContainsDashes() throws Exception {
+        String requestBody = """
+                {
+                    "title": "Mommyclopedia: 78 Resep MPASI",
+                    "author": "dr. Meta Hanindita, Sp.A",
+                    "isbn": "978-602-8519-93-9",
+                    "publicationYear": "2016",
+                    "genre": "Parenting"
+                }
+                """;
+
+        mockMvc.perform(post("/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.errors", hasSize(1)))
+                .andExpect(jsonPath("$.errors", hasItem("isbn: ISBN must be 13 digits, start with 978 or 979, and contain no dashes")));
+    }
+
+    @Test
+    void createBook_shouldReturn400_whenIsbnHasInvalidPrefix() throws Exception {
+        String requestBody = """
+                {
+                    "title": "Mommyclopedia: 78 Resep MPASI",
+                    "author": "dr. Meta Hanindita, Sp.A",
+                    "isbn": "9771234567890",
+                    "publicationYear": "2016",
+                    "genre": "Parenting"
+                }
+                """;
+
+        mockMvc.perform(post("/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.errors", hasSize(1)))
+                .andExpect(jsonPath("$.errors", hasItem("isbn: ISBN must be 13 digits, start with 978 or 979, and contain no dashes")));
+    }
+
+    @Test
+    void createBook_shouldReturn400_whenIsbnLengthIsNot13() throws Exception {
+        String requestBody = """
+                {
+                    "title": "Mommyclopedia: 78 Resep MPASI",
+                    "author": "dr. Meta Hanindita, Sp.A",
+                    "isbn": "97860285",
+                    "publicationYear": "2016",
+                    "genre": "Parenting"
+                }
+                """;
+
+        mockMvc.perform(post("/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.errors", hasSize(1)))
+                .andExpect(jsonPath("$.errors", hasItem("isbn: ISBN must be 13 digits, start with 978 or 979, and contain no dashes")));
     }
 
     @Test
@@ -82,11 +145,39 @@ class BookControllerIntegrationTest {
     }
 
     @Test
+    void createBook_shouldReturn409_whenIsbnAlreadyExists() throws Exception {
+        bookRepository.save(Book.builder()
+                .title("Mommyclopedia: 78 Resep MPASI")
+                .author("dr. Meta Hanindita, Sp.A")
+                .isbn("9786028519939")
+                .publicationYear("2016")
+                .genre("Parenting")
+                .build());
+
+        String requestBody = """
+                {
+                    "title": "Another Book",
+                    "author": "Another Author",
+                    "isbn": "9786028519939",
+                    "publicationYear": "2020",
+                    "genre": "Parenting"
+                }
+                """;
+
+        mockMvc.perform(post("/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status", is(409)))
+                .andExpect(jsonPath("$.message", is("Book with ISBN 9786028519939 already exists")));
+    }
+
+    @Test
     void updateBook_shouldReturn200_whenRequestIsValid() throws Exception {
         Book existingBook = bookRepository.save(Book.builder()
                 .title("Mommyclopedia: 78 Resep MPASI")
                 .author("dr. Meta Hanindita, Sp.A")
-                .isbn("978-602-8519-93-9")
+                .isbn("9786028519939")
                 .publicationYear("2016")
                 .genre("Parenting")
                 .description("Kumpulan resep MPASI untuk bayi")
@@ -96,7 +187,7 @@ class BookControllerIntegrationTest {
                 {
                     "title": "Mommyclopedia: 78 Resep MPASI Edisi Revisi",
                     "author": "dr. Meta Hanindita, Sp.A",
-                    "isbn": "978-602-8519-93-9",
+                    "isbn": "9786028519939",
                     "publicationYear": "2018",
                     "genre": "Parenting",
                     "description": "Kumpulan resep MPASI untuk bayi edisi revisi"
@@ -110,10 +201,73 @@ class BookControllerIntegrationTest {
                 .andExpect(jsonPath("$.id", is(existingBook.getId().intValue())))
                 .andExpect(jsonPath("$.title", is("Mommyclopedia: 78 Resep MPASI Edisi Revisi")))
                 .andExpect(jsonPath("$.author", is("dr. Meta Hanindita, Sp.A")))
-                .andExpect(jsonPath("$.isbn", is("978-602-8519-93-9")))
+                .andExpect(jsonPath("$.isbn", is("9786028519939")))
                 .andExpect(jsonPath("$.publicationYear", is("2018")))
                 .andExpect(jsonPath("$.genre", is("Parenting")))
                 .andExpect(jsonPath("$.description", is("Kumpulan resep MPASI untuk bayi edisi revisi")));
+    }
+
+    @Test
+    void updateBook_shouldReturn200_whenIsbnUnchanged() throws Exception {
+        Book existingBook = bookRepository.save(Book.builder()
+                .title("Mommyclopedia: 78 Resep MPASI")
+                .author("dr. Meta Hanindita, Sp.A")
+                .isbn("9786028519939")
+                .publicationYear("2016")
+                .genre("Parenting")
+                .build());
+
+        String requestBody = """
+                {
+                    "title": "Mommyclopedia: 78 Resep MPASI Updated",
+                    "author": "dr. Meta Hanindita, Sp.A",
+                    "isbn": "9786028519939",
+                    "publicationYear": "2016",
+                    "genre": "Parenting"
+                }
+                """;
+
+        mockMvc.perform(put("/books/{id}", existingBook.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", is("Mommyclopedia: 78 Resep MPASI Updated")));
+    }
+
+    @Test
+    void updateBook_shouldReturn409_whenIsbnAlreadyExistsOnAnotherBook() throws Exception {
+        bookRepository.save(Book.builder()
+                .title("Mommyclopedia: 78 Resep MPASI")
+                .author("dr. Meta Hanindita, Sp.A")
+                .isbn("9786028519939")
+                .publicationYear("2016")
+                .genre("Parenting")
+                .build());
+
+        Book secondBook = bookRepository.save(Book.builder()
+                .title("Another Book")
+                .author("Another Author")
+                .isbn("9791234567890")
+                .publicationYear("2020")
+                .genre("Fiction")
+                .build());
+
+        String requestBody = """
+                {
+                    "title": "Another Book Updated",
+                    "author": "Another Author",
+                    "isbn": "9786028519939",
+                    "publicationYear": "2020",
+                    "genre": "Fiction"
+                }
+                """;
+
+        mockMvc.perform(put("/books/{id}", secondBook.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status", is(409)))
+                .andExpect(jsonPath("$.message", is("Book with ISBN 9786028519939 already exists")));
     }
 
     @Test
@@ -122,7 +276,7 @@ class BookControllerIntegrationTest {
                 {
                     "title": "Mommyclopedia: 78 Resep MPASI",
                     "author": "dr. Meta Hanindita, Sp.A",
-                    "isbn": "978-602-8519-93-9",
+                    "isbn": "9786028519939",
                     "publicationYear": "2016",
                     "genre": "Parenting"
                 }

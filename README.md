@@ -110,3 +110,4 @@ The application starts on `http://localhost:8080`.
 - Ask for technical explanation and usage of regex
 - Create a repetitive Integration Test (which I create once / twice before)
 - Find recommendation for the lightweight base image to Dockerize the backend apps
+- Create prerequisites and how to run locally documents

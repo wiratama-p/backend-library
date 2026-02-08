@@ -5,6 +5,8 @@ import com.wiratamap.backendlibrary.service.BookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -24,8 +26,18 @@ public class BookController {
         return bookService.create(bookDto);
     }
 
+    @GetMapping("/books/{id}")
+    public BookDto findById(@PathVariable Long id) {
+        return bookService.findById(id);
+    }
+
     @PutMapping("/books/{id}")
     public BookDto update(@PathVariable Long id, @Valid @RequestBody BookDto bookDto) {
         return bookService.update(id, bookDto);
+    }
+
+    @DeleteMapping("/books/{id}")
+    public void delete(@PathVariable Long id) {
+        bookService.delete(id);
     }
 }

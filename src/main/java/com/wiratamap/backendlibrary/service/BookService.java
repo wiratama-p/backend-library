@@ -17,22 +17,25 @@ public class BookService {
     private final BookRepository bookRepository;
 
     public BookDto create(BookDto bookDto) {
-        if (bookRepository.existsByIsbn(bookDto.isbn())) {
-            throw new DuplicateRecordException("Book with ISBN " + bookDto.isbn() + " already exists");
-        }
+        validateIsbnUnique(bookDto.isbn(), null);
 
         Book book = toEntity(bookDto);
         Book savedBook = bookRepository.save(book);
         return toDto(savedBook);
     }
 
-    public BookDto update(Long id, BookDto bookDto) {
-        Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new RecordNotFoundException("Book not found with id: " + id));
+    public BookDto findById(Long id) {
+        return toDto(findBookById(id));
+    }
 
-        if (bookRepository.existsByIsbnAndIdNot(bookDto.isbn(), id)) {
-            throw new DuplicateRecordException("Book with ISBN " + bookDto.isbn() + " already exists");
-        }
+    public void delete(Long id) {
+        findBookById(id);
+        bookRepository.deleteById(id);
+    }
+
+    public BookDto update(Long id, BookDto bookDto) {
+        Book book = findBookById(id);
+        validateIsbnUnique(bookDto.isbn(), id);
 
         book.setTitle(bookDto.title());
         book.setAuthor(bookDto.author());
@@ -43,6 +46,21 @@ public class BookService {
 
         Book updatedBook = bookRepository.save(book);
         return toDto(updatedBook);
+    }
+
+    private Book findBookById(Long id) {
+        return bookRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Book not found with id: " + id));
+    }
+
+    private void validateIsbnUnique(String isbn, Long excludeId) {
+        boolean exists = excludeId == null
+                ? bookRepository.existsByIsbn(isbn)
+                : bookRepository.existsByIsbnAndIdNot(isbn, excludeId);
+
+        if (exists) {
+            throw new DuplicateRecordException("Book with ISBN " + isbn + " already exists");
+        }
     }
 
     private Book toEntity(BookDto bookDto) {

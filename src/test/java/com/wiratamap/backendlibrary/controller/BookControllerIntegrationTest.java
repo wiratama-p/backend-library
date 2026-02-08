@@ -14,6 +14,8 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -285,6 +287,61 @@ class BookControllerIntegrationTest {
         mockMvc.perform(put("/books/{id}", 999)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.message", is("Book not found with id: 999")));
+    }
+
+    @Test
+    void getBook_shouldReturn200_whenBookExists() throws Exception {
+        Book existingBook = bookRepository.save(Book.builder()
+                .title("Mommyclopedia: 78 Resep MPASI")
+                .author("dr. Meta Hanindita, Sp.A")
+                .isbn("9786028519939")
+                .publicationYear("2016")
+                .genre("Parenting")
+                .description("Kumpulan resep MPASI untuk bayi")
+                .build());
+
+        mockMvc.perform(get("/books/{id}", existingBook.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(existingBook.getId().intValue())))
+                .andExpect(jsonPath("$.title", is("Mommyclopedia: 78 Resep MPASI")))
+                .andExpect(jsonPath("$.author", is("dr. Meta Hanindita, Sp.A")))
+                .andExpect(jsonPath("$.isbn", is("9786028519939")))
+                .andExpect(jsonPath("$.publicationYear", is("2016")))
+                .andExpect(jsonPath("$.genre", is("Parenting")))
+                .andExpect(jsonPath("$.description", is("Kumpulan resep MPASI untuk bayi")));
+    }
+
+    @Test
+    void getBook_shouldReturn404_whenBookNotFound() throws Exception {
+        mockMvc.perform(get("/books/{id}", 999))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.message", is("Book not found with id: 999")));
+    }
+
+    @Test
+    void deleteBook_shouldReturn200_whenBookExists() throws Exception {
+        Book existingBook = bookRepository.save(Book.builder()
+                .title("Mommyclopedia: 78 Resep MPASI")
+                .author("dr. Meta Hanindita, Sp.A")
+                .isbn("9786028519939")
+                .publicationYear("2016")
+                .genre("Parenting")
+                .build());
+
+        mockMvc.perform(delete("/books/{id}", existingBook.getId()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/books/{id}", existingBook.getId()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteBook_shouldReturn404_whenBookNotFound() throws Exception {
+        mockMvc.perform(delete("/books/{id}", 999))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.message", is("Book not found with id: 999")));
